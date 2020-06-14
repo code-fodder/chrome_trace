@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <thread>
+#include <mutex>
 
 namespace utilities
 {
@@ -23,7 +25,7 @@ public:
         return _instance;
     }
 
-    void begin_session(const std::string &name, const std::string &filepath = "results.json")
+    void begin_session(const std::string &name, const std::string &filepath = "profiler_results.json")
     {
         m_output_stream.open(filepath);
         (void) name;
@@ -39,6 +41,7 @@ public:
 
     void write_profile(const profiler::result& res)
     {
+        std::lock_guard<std::mutex> lk(m_mtx);
         // Add a comma between records
         if (m_count++ > 0)
         {
@@ -51,7 +54,7 @@ public:
         m_output_stream << "\"name\":\"" << res.name << "\",";
         m_output_stream << "\"ph\":\"X\",";
         m_output_stream << "\"pid\":0,";
-        m_output_stream << "\"tid\":0,";
+        m_output_stream << "\"tid\":" << std::this_thread::get_id() << ",";
         m_output_stream << "\"ts\":" << res.start_time_us;
         m_output_stream << "}";
         m_output_stream.flush();
@@ -75,12 +78,13 @@ private:
 
     std::ofstream m_output_stream;
     int m_count;
+    std::mutex m_mtx;
 };
 
 class profiling_timer
 {
 public:
-    profiling_timer(const std::string &name) : m_name(name){}
+    profiling_timer(const std::string name) : m_name(name){}
     ~profiling_timer(){ if (m_running){stop();} }
 
     void stop()
@@ -98,5 +102,13 @@ private:
     bool m_running{true};
     std::chrono::time_point<std::chrono::high_resolution_clock> m_start_tp{std::chrono::high_resolution_clock::now()};
 };
+
+#define PROFILING 1
+#if PROFILING
+    #define PROFILE_SCOPE(name) utilities::profiling_timer tmr##__LINE__(name)
+#else
+    #define PROFILE_SCOPE(name)
+#endif
+#define PROFILE_FUNCTION() PROFILE_SCOPE(__PRETTY_FUNCTION__)
 
 } // utilities

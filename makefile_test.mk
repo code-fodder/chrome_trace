@@ -8,8 +8,7 @@ include make_utils/common_variables.mk
 PROJECT_NAME = chrome_trace
 
 POST_BUILD_TASKS  = cd $(OUTPUT_DIR) && ./$(OUTPUT_FILE);
-POST_BUILD_TASKS += cat results.json;
-POST_BUILD_TASKS += echo '';
+POST_BUILD_TASKS += speedscope profiler_results.json;
 
 
 #######################################################################

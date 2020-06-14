@@ -10,6 +10,8 @@ PROJECT_NAME = chrome_trace
 # Add your souce directories here
 SOURCE_DIRS = .
 
+DEFINES += -DPROFILER_FILENAME=profiler.json
+
 # Include paths
 INC_DIRS = .
 
